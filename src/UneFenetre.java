@@ -7,66 +7,80 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import java.awt.Dimension;
+import java.util.HashMap;
 
 class UneFenetre extends JFrame implements ActionListener
 {
-    UnMobile sonMobile[];
     private final int LARG=1000, HAUT=500, NB_BUTTON = 10;
-    private Thread[] thread;
-    private JButton[] button;
+    private HashMap<JButton, Thread> threads;
+    private HashMap<JButton, Boolean> estArrete;
+
     private boolean interrupted = false;
+
     public UneFenetre()
     {
-	// ajouter sonMobile a la fenetre
-	// creer une thread laThread avec sonMobile
-	// afficher la fenetre
-	// lancer laThread 
     	super("Une fenêtre");
-    	sonMobile = new UnMobile[NB_BUTTON];
     	this.setSize(LARG, HAUT);
     	this.setVisible(true);
     	
-    	button = new JButton[NB_BUTTON];
-    	thread = new Thread[NB_BUTTON];
+        threads = new HashMap<JButton, Thread>();
+        estArrete = new HashMap<JButton, Boolean>();
     	
     	Container container = getContentPane();
     	container.setLayout(new GridBagLayout());
     	
     	
     	GridBagConstraints c = new GridBagConstraints();
-    	
-    	c.fill = GridBagConstraints.HORIZONTAL;
-    	c.gridx = 0;
-    	c.gridy = 0;
+    	c.fill = GridBagConstraints.BOTH;
 
     	for(int i = 0; i < NB_BUTTON; i++){
-
-        	c.gridwidth = 1;
-    		button[i] = new JButton("Arrêt/Continu");
-    		button[i].addActionListener(this);
-    		container.add(button[i], c);
-    		
-    		c.gridx = 1;
-    		c.gridwidth = 4;
-    		
-        	sonMobile[i] = new UnMobile(LARG - 200, 40);
-        	thread[i] = new Thread(sonMobile[i]);
-            thread[i].start();
             
-    		container.add(sonMobile[i], c);
-    		
+    		JButton new_button = new JButton("Arrêt/Continu");
+    		new_button.addActionListener(this);
+
+
+    		c.gridy = i;
     		c.gridx = 0;
-    		c.gridy += 1;
+    		c.gridwidth = 1;
+            c.weightx = 0.75;
+            c.weighty = 1;
+            
+        	UnMobile sonMobile = new UnMobile(LARG*3/4, 40);
+            threads.put(new_button, new Thread(sonMobile));
+            estArrete.put(new_button, false);
+            threads.get(new_button).start();
+    		container.add(sonMobile, c);
+
+    		
+        	c.gridwidth = 1;
+    		c.gridy = i;
+    		c.gridx = 1;
+            c.weightx = 0.25;
+            c.weighty = 1;
+    		
+    		container.add(new_button, c);
+    		
     	}
-    	
-    	
     	
     }
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		if(arg0.getSource() == button){
+		if(arg0.getSource() instanceof JButton){
+            JButton button = (JButton)arg0.getSource();
+            if(estArrete.get(button) == false)
+            {
+                threads.get(button).suspend();
+                estArrete.put(button, true);
+            }
+            else
+            {
+                threads.get(button).resume();
+                estArrete.put(button, false);
 
+            }
+            
 		}
 		
 	}
